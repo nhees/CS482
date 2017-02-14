@@ -13,7 +13,7 @@ using namespace std;
 Meta::Meta(string fileName, Config configObj)
       :metaEnd(false), metaEmpty(true),metaBadData(false), metaClosed(false), meta(fileName), ConfigObj(configObj)
       {
-       cout <<"In meta consturctor" <<endl;
+       
        MetaOpenFile();
       
       }
@@ -44,7 +44,7 @@ void Meta::MetaOpenFile()
        getline(metaFile, first, ' ');
        if(first == "Start")
        {
-          MetaGetData();  
+          MetaGetData();  // make it bool
           GetTotalTime();
       
        }
@@ -72,6 +72,8 @@ void Meta::MetaGetData()
      char currChar,IDChar;
      int objNum;
      unsigned  endIndex, index = 0;
+      /*START TIME*/
+     /*OUTPUT THE START*/
 
      getline(metaFile,line); //<-- Grabs the first line
     
@@ -81,48 +83,64 @@ void Meta::MetaGetData()
       
        // This is only for the second line of the document because it should have start and Application
 
-       currChar = line.at(index);
+       currChar = GetIDChar(line, index);//line.at(index);
       // check for start
       if(currChar == 'S')
       {
+        metaEmpty = false;
          IDChar = currChar;   
             
-         index++; 
-         currChar = line.at(index);
-         index = SkipWhiteSpace(line, index);
-         if(currChar == '(')
+        // index++; 
+         
+        // index = SkipWhiteSpace(line, index + 1);
+         //currChar = line.at(index);
+         index = FindLeftPar(line, index + 1);
+
+         if(index >=  0)
          { 
             // Checks if it has the right descriptor
             process = GetDescriptor(IDChar, line , index+1);
-            if(process == "Bad")
+           /* if(process == "Bad")
             {
                   
               error = "Incorrect description";
               metaBadData = true;
               MetaCloseFile();
-            }
-            else
+            }*/
+              cout <<"Process : " <<process <<endl;
+           if(process != "Bad")
 
             {     
                   // gets the number            
                   objNum = GetNumber(line, index); 
-                  if(objNum >= 0)
+                  cout <<"Object Number : " << objNum <<endl; 
+
+                  if(objNum >= 0) // checks if the number is valid
                   {
-                        index++;
-                        currChar = line.at(index);
+                        //index++;
+                        //currChar = line.at(index);
+                          currChar = GetIDChar(line, index);
+                          //cout <<"made it through get id char" <<endl;
+                         // currChar = line.at(index);
+
+//                          cout <<"Current: "<< currChar <<endl;
                         //Got S correct now checking if A is correct
-                        while ((currChar != 'A' ) && ( currChar != '('))
+                      /*  while ((currChar != 'A' ) && ( currChar != '('))
                         {
                           
                          index++;
                          currChar = line.at(index);
-                        }
+                        }*/
                         
                         if(currChar == 'A')
                         {
+  //                        cout <<"Found A" <<endl;
+                            /*OUTPUT THE START OF PROCESS 1*/
                               
                               IDChar = currChar;
-                              index = SkipWhiteSpace(line , index+1); //need to continue one   
+                              index = FindLeftPar(line, index+1);
+                              cout <<"made it to left par" <<endl;
+                              //index = SkipWhiteSpace(line , index+1); //need to continue one   
                               currChar = line.at(index);
                               
                               if(currChar == '(')
@@ -139,11 +157,12 @@ void Meta::MetaGetData()
                                           if (objNum >= 0)
                                           {
                                                  index = (line.find(')', index) +1);
+                                                 
                                             while (!metaClosed && !metaBadData) 
                                                 {
                                                    
                                                   currChar = line.at(index);   // gets the next character
-                                                  cout <<currChar <<endl;
+                                                 // cout <<currChar <<endl;
                                                  
                                                   
                                                       /*OBJECTS*/
@@ -186,6 +205,8 @@ void Meta::MetaGetData()
                                                                               process = GetDescriptor(currChar,line, endIndex + 1);
                                                                               if(process == "end")
                                                                               {
+                                                                                    // return true ;
+
                                                                                     metaEnd= true;
                                                                                     MetaCloseFile();
                                                                                     
@@ -451,7 +472,7 @@ void Meta::output(fstream &Data)
  {
 
       Data <<"Meta-Data Metrics \n"; 
-      cout <<"In the file if" <<endl;           
+        
             if (metaEmpty)
             {
               Data <<"Meta File was Empty \n";
@@ -487,6 +508,62 @@ void Meta::output(fstream &Data)
        
 
  
+}
+
+char Meta::GetIDChar(string line, int position)
+{
+  int index = updateIndex( line,  position);
+
+  if (index >= 0)
+  {
+    char current = line.at(index);
+
+    return current;
+  }
+  
+   
+  
+ /*  cout <<"Found : " << current <<endl;
+  if (current == 'S' || current == 'A' || current == 'P' || current =='M'
+       || current == 'I' || current == 'O')
+  {
+    return current;
+  }*/
+
+  return 'E';
+
+}
+
+
+int Meta::updateIndex (string line, int position)
+{
+
+  char current = line.at(position);
+  while(current != 'A' && current != 'S' && current != 'P' && current != 'M' 
+    && current != 'I' && current != 'O' && current != '\n')
+  {
+    position ++;
+    current  = line.at(position);
+  }
+
+   if(current != '\n')
+   {
+    return position;
+   }
+
+   return -1;
+
+}
+
+int Meta::FindLeftPar(string line, int position)
+{
+  int index = line.find('(',position);
+  char current = line.at(index);
+   if(current == '(')
+   {
+    return index;
+   }
+   return -1;
 }
 
 #endif

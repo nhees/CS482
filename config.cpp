@@ -23,7 +23,7 @@ Config ::Config(const Config &obj)
   
   for(auto it = obj.computerList.begin(); it != obj.computerList.end(); it++)
   {
-    cout <<it->objectName <<endl;
+    //cout <<it->objectName <<endl;
     computerList.push_back(*it);
     
   }
@@ -205,7 +205,7 @@ void Config::GetLastWord(string firstWord)
        time = stoi(lastWord, NULL, 10);
      	 Object tempObj(time, firstWord);
      	 computerList.push_back(tempObj); 
-     	 cout <<"Object Data" << tempObj.cycleTime << " Name: " << tempObj.objectName << endl;
+     	// cout <<"Object Data" << tempObj.cycleTime << " Name: " << tempObj.objectName << endl;
      	
      }
      
