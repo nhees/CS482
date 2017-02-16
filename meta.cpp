@@ -19,7 +19,7 @@ Meta::Meta(string fileName, Config configObj)
       }
 //deconstructor      	
 Meta::~Meta()
-      {
+      {     // NEED TO EMPTY THE QUEUE
             while (!items.empty())
                   {
                     items.pop_back();
@@ -44,7 +44,8 @@ void Meta::MetaOpenFile()
        getline(metaFile, first, ' ');
        if(first == "Start")
        {
-          MetaGetData();  // make it bool
+          startTime();
+          metaBadData = !MetaGetData();  // make it bool
           GetTotalTime();
       
        }
@@ -60,17 +61,18 @@ void Meta::MetaOpenFile()
 // closes the file
 void Meta::MetaCloseFile() 
    {
+    cout <<"Closing the file " <<endl;
      metaFile.close();
      metaClosed = true;
    }
 
       	
 // Parses the meta Data document
-void Meta::MetaGetData()
+bool Meta::MetaGetData()
    {
      string line, process;
      char currChar,IDChar;
-     int objNum;
+     int objNum, processCount;
      unsigned  endIndex, index = 0;
       /*START TIME*/
      /*OUTPUT THE START*/
@@ -83,231 +85,188 @@ void Meta::MetaGetData()
       
        // This is only for the second line of the document because it should have start and Application
 
-       currChar = GetIDChar(line, index);//line.at(index);
+       currChar = GetIDChar(line, index);
       // check for start
+       error = "File is Empty"; // Error message if the statement fails
       if(currChar == 'S')
       {
+
         metaEmpty = false;
          IDChar = currChar;   
             
-        // index++; 
-         
-        // index = SkipWhiteSpace(line, index + 1);
-         //currChar = line.at(index);
+       
          index = FindLeftPar(line, index + 1);
-
+         error = "No Left Parenthese with operation"; // Error message if the statement fails
          if(index >=  0)
          { 
             // Checks if it has the right descriptor
             process = GetDescriptor(IDChar, line , index+1);
-           /* if(process == "Bad")
-            {
-                  
-              error = "Incorrect description";
-              metaBadData = true;
-              MetaCloseFile();
-            }*/
-              cout <<"Process : " <<process <<endl;
-           if(process != "Bad")
+            error = "Incorrect Description given with operation"; // Error message if the statement fails
 
-            {     
-                  // gets the number            
+           if(process == "start")
+
+            {        
                   objNum = GetNumber(line, index); 
-                  cout <<"Object Number : " << objNum <<endl; 
+                  error = "Object cycle amount is invalid"; // Error message if the statement fails
 
                   if(objNum >= 0) // checks if the number is valid
                   {
-                        //index++;
-                        //currChar = line.at(index);
+                       cout <<"made it " <<endl;      
                           currChar = GetIDChar(line, index);
-                          //cout <<"made it through get id char" <<endl;
-                         // currChar = line.at(index);
+                          error = "No Starting Process Operation"; // Error message if the statement fails
 
-//                          cout <<"Current: "<< currChar <<endl;
-                        //Got S correct now checking if A is correct
-                      /*  while ((currChar != 'A' ) && ( currChar != '('))
-                        {
-                          
-                         index++;
-                         currChar = line.at(index);
-                        }*/
-                        
                         if(currChar == 'A')
                         {
-  //                        cout <<"Found A" <<endl;
+                             cout <<"made it " <<endl; 
                             /*OUTPUT THE START OF PROCESS 1*/
                               
                               IDChar = currChar;
                               index = FindLeftPar(line, index+1);
-                              cout <<"made it to left par" <<endl;
-                              //index = SkipWhiteSpace(line , index+1); //need to continue one   
-                              currChar = line.at(index);
-                              
-                              if(currChar == '(')
-                              {
-                             
-                                 process = GetDescriptor(IDChar,line, index+1);
-                                 // index +1 so we can move past the (
-                                 
-                                    if (process != "Bad")
-                                    {
+                              error = "Left Parenthese isnt given with operation"; // Error message if the statement fails
 
+                              if(index >= 0)
+                              {
+                                 currChar = line.at(index);
+                                 process = GetDescriptor(IDChar,line, index+1);                               
+                                    error = "No Starting Process Operation"; // Error message if the statement fails
+                                  
+                                   if (process == "start")
+                                    {
+                                          processCount  = 1; // First process
                                           objNum = GetNumber(line, index);
-                                          
+                                          error = "INVALID CYCLE AMOUNT"; // Error message if the statement fails 
+
                                           if (objNum >= 0)
                                           {
-                                                 index = (line.find(')', index) +1);
-                                                 
+                                             /*IF THE PRGRAM STARTS WITH S(START) and A(START)*/
+                                                
+
+                                                 index = updateIndex(line, index); 
+                                                
                                             while (!metaClosed && !metaBadData) 
                                                 {
-                                                   
-                                                  currChar = line.at(index);   // gets the next character
-                                                 // cout <<currChar <<endl;
+
                                                  
+                                                  currChar = GetIDChar(line, index);// line.at(index);  
+                                               
+                                                 if(currChar == 'E')
+                                                 {
+                                                  /*Found the end of the line moving to the next one*/
+                                                  getline(metaFile,line);
+                                                  index = 0;
+                                                  currChar = GetIDChar(line,index);
+
+                                                 }
                                                   
                                                       /*OBJECTS*/
                                                 if((currChar == 'P')||(currChar =='S')||(currChar == 'A')
                                                       ||(currChar =='I')||(currChar == 'O')||(currChar == 'M'))
                                                 {
-                                                      
+                                                      // Valid command 
                                                       IDChar = currChar;
-                                                      index = line.find('(',index+1);
-                                                    
+                                                      index = FindLeftPar(line, index);                                                    
+                                                      error = "Left Parenthese isnt given with operation";
+
                                                       if(index != string::npos)
                                                       {
                                                           // Gets the description
                                                          process = GetDescriptor(IDChar, line,index+1);
+                                                         error = "INCORRECT DESCRIPTION WITH OPERATION";
+
                                                          if(process != "Bad") 
                                                          {
                                                             
                                                             objNum = GetNumber(line, index);
-                                                            index = (line.find(')', index) +1);
+                                                            index = updateIndex(line,index);
+                                                            error = "INCORRECT CYCLE AMOUNT";
                                                             //checks if the number is valid
                                                             if(objNum>= 0)
-                                                            {      //Checks if the program is ending
-                                                                  if(IDChar == 'A')
-                                                                  {
-                                                                        if (process == "end")
-                                                                        {
-                                                                         endIndex = index;
-                                                                         currChar = line.at(endIndex);
-
-                                                                         while (endIndex <line.size() && currChar !='S' && currChar !='(')
-                                                                         {
-                                                                           endIndex++;
+                                                            {      /*CHECKS IF PROCESS IS ENDING*/
+                                                                   if(IDChar == 'A')
+                                                                     {
+                                                                         if (process == "end")
+                                                                          {
+                                                                           endIndex = index;
                                                                            currChar = line.at(endIndex);
 
-                                                                         } 
+                                                                           endIndex = updateIndex(line, endIndex);
+
                                                                          //checks if the Program is Ending via S
-                                                                         if (currChar =='S')
-                                                                         {
-                                                                              endIndex = line.find('(',index+1);
+                                                                             if (currChar =='S')
+                                                                             {
+                                                                              endIndex = FindLeftPar(line, index+1);
                                                                               process = GetDescriptor(currChar,line, endIndex + 1);
-                                                                              if(process == "end")
-                                                                              {
+                                                                               if(process == "end")
+                                                                                {
                                                                                     // return true ;
 
                                                                                     metaEnd= true;
                                                                                     MetaCloseFile();
-                                                                                    
+                                                                                    return true;
+                                                                                }
                                                                               }
-                                                                         }
+                                                                              /*CHEKCING IF GETTING A NEW PROCESS*/
+                                                                             else if(currChar == 'A')
+                                                                              {
+                                                                               index = FindLeftPar(line, index);
+                                                                                process = GetDescriptor(currChar,line,index);
+                                                                                 if(process == "Start")
+                                                                                   {
+                                                                                    processCount++;
+                                                                                    index = updateIndex(line, index);
+                                                                                   }
 
-                                                                        } 
+                                                                              }
 
-                                                                  }
+                                                                          } 
+
+                                                                        }
+
+                                                                  /*NOT THE A OPERATION*/
                                                                   else
-                                                                  {
-                                                                  MetaData data(objNum, process,IDChar, 0);
-                                                                  //initalizes then pushes
-                                                                  items.push_back(data);
+                                                                  { /*ADDS OPERATION TO QUEUE*/
+                                                                    MetaData data(objNum, process,IDChar, 0);
+                                                                    items.push_back(data);
+                                                                    operations.push_back(data); // LOADS To THE QUEUE
+                                                                    //cout <<"Just added data " <<endl;
                                                                   }
 
                                                             }
-                                                            else
-                                                            {
-                                                             error = "Bad cycle number";
-                                                             metaBadData = true;
-                                                            }
-
-                                                         }
-                                                         else
-                                                         {
-                                                            error= "Bad description";
-                                                            metaBadData = true;
-                                                         }  
-                                                      }
-                                                      else
-                                                      {
-                                                           error = "No (";
-                                                           metaBadData = true;
-                                                      }
+                                                           
                                                       
                                                 }
                                                 else if(currChar == '(')
                                                 {
-                                                 metaBadData = true;
+                                                 
                                                  error ="No Meta id";
                                                  MetaCloseFile();
+                                                 return false;
 
                                                 }
 
-                                                index++;
-
-                                                 if (index == line.size()-1)
-                                                      {  // at the end of the line needs to go to the next line 
-
-                                                       getline(metaFile,line);
-                                                       index = 0;
-                                                    
-
-                                                      } 
+                                            
                                                 } // while
 
                                           } // if A has all of the correct data
-                                          else
-                                          {
-                                                metaBadData = true;
-                                                error= "Incorrect cycle amount";
-                                             // bad data function
-                                          }
+                                        
                                     }
-                                    else
-                                    {
-                                          error = "incorrect description";
-                                          metaBadData = true;
-
-                                    }
+                                    
                               }
-                              else // no paraenthese
-                              {
-                                 error= "No paraenthese";
-                                 metaBadData = true;
-                                    // bad data function 
-                              }
+                              
 
-
+                           }
                         } 
-                        else
-                        {
-                              error = "Incorrect Operator";
-                              metaBadData = true;
-                              MetaCloseFile();
-                        }
+                       
 
                   }
-              
+              }
 
             } // S process is correct
          }
       
      } // second line if
 
-     else 
-     {
-      metaEmpty = true;
-      MetaCloseFile();
-     } // first operations isnt S
+     return false; // SOMETHING WAS INCORRECT
 
   
 }
@@ -512,15 +471,17 @@ void Meta::output(fstream &Data)
 
 char Meta::GetIDChar(string line, int position)
 {
+  //cout <<"Index in getID :" << position <<endl;
   int index = updateIndex( line,  position);
-
+ // cout <<"Update index" <<endl;
+   //cout << "Returned with index" <<endl;
   if (index >= 0)
   {
     char current = line.at(index);
-
+    //cout <<"returning at index : " <<index << "And current: " <<current <<endl;
     return current;
   }
-  
+
    
   
  /*  cout <<"Found : " << current <<endl;
@@ -529,7 +490,7 @@ char Meta::GetIDChar(string line, int position)
   {
     return current;
   }*/
-
+  //cout <<"returning invalid char" <<endl;
   return 'E';
 
 }
@@ -537,24 +498,36 @@ char Meta::GetIDChar(string line, int position)
 
 int Meta::updateIndex (string line, int position)
 {
-
+ // cout <<"Position: " << position <<endl;
+  int  index = 0;
+     index = position;
+  int listLength = line.size() - 1;
+   // cout <<"In Update Index" <<endl; 
+  if(index >= 0) // Checking if given a valid input 
+  {
+    //cout <<"Index is valid "<<index <<endl;
   char current = line.at(position);
   while(current != 'A' && current != 'S' && current != 'P' && current != 'M' 
-    && current != 'I' && current != 'O' && current != '\n')
+    && current != 'I' && current != 'O' && index != listLength)
   {
-    position ++;
-    current  = line.at(position);
+    index ++;
+    current  = line.at(index);
+    
   }
+  //cout <<"Finished while " <<endl;
 
-   if(current != '\n')
+   if(index != listLength)
    {
-    return position;
+    // cout <<"returning index of valid amount" <<endl;
+    return index;
    }
-
+  }
+   //cout <<"Returning invalid index" <<endl;
    return -1;
 
 }
 
+// Finds the left parenthese for the meta data when parsing
 int Meta::FindLeftPar(string line, int position)
 {
   int index = line.find('(',position);
@@ -564,6 +537,12 @@ int Meta::FindLeftPar(string line, int position)
     return index;
    }
    return -1;
+}
+
+//Starts the clock on the program
+void StartTime()
+{
+  startTime = clock();
 }
 
 #endif
