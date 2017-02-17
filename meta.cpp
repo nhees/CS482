@@ -25,6 +25,11 @@ Meta::~Meta()
                     items.pop_back();
                   }
 
+            while(!operations.empty())
+            {
+              operations.pop();
+            }
+            //cout <<"In meta deconstructor" <<endl;
       }
 
 // opens the file and then calls getData and get total time
@@ -44,9 +49,9 @@ void Meta::MetaOpenFile()
        getline(metaFile, first, ' ');
        if(first == "Start")
        {
-          startTime();
+          StartTimer();
           metaBadData = !MetaGetData();  // make it bool
-          GetTotalTime();
+    //      GetTotalTime();
       
        }
        else 
@@ -72,7 +77,7 @@ bool Meta::MetaGetData()
    {
      string line, process;
      char currChar,IDChar;
-     int objNum, processCount;
+     int objNum;//, processCount;
      unsigned  endIndex, index = 0;
       /*START TIME*/
      /*OUTPUT THE START*/
@@ -111,13 +116,13 @@ bool Meta::MetaGetData()
 
                   if(objNum >= 0) // checks if the number is valid
                   {
-                       cout <<"made it " <<endl;      
+                            
                           currChar = GetIDChar(line, index);
                           error = "No Starting Process Operation"; // Error message if the statement fails
 
                         if(currChar == 'A')
                         {
-                             cout <<"made it " <<endl; 
+                             
                             /*OUTPUT THE START OF PROCESS 1*/
                               
                               IDChar = currChar;
@@ -138,6 +143,9 @@ bool Meta::MetaGetData()
 
                                           if (objNum >= 0)
                                           {
+                                            MetaData dataA(objNum, process,IDChar, 0);
+                                            operations.push(dataA);
+                                            OperationProcess(dataA);
                                              /*IF THE PRGRAM STARTS WITH S(START) and A(START)*/
                                                 
 
@@ -190,8 +198,11 @@ bool Meta::MetaGetData()
                                                                            currChar = line.at(endIndex);
 
                                                                            endIndex = updateIndex(line, endIndex);
+                                                                            MetaData dataB(objNum, process,IDChar, 0);
+                                                                            operations.push(dataB);
+                                                                            OperationProcess(dataB);
 
-                                                                         //checks if the Program is Ending via S
+                                                                          //checks if the Program is Ending via S
                                                                              if (currChar =='S')
                                                                              {
                                                                               endIndex = FindLeftPar(line, index+1);
@@ -214,6 +225,10 @@ bool Meta::MetaGetData()
                                                                                    {
                                                                                     processCount++;
                                                                                     index = updateIndex(line, index);
+                                                                                    MetaData dataC(objNum, process,IDChar, 0);
+                                                                                    operations.push(dataC);
+                                                                                    OperationProcess(dataC);
+
                                                                                    }
 
                                                                               }
@@ -226,8 +241,11 @@ bool Meta::MetaGetData()
                                                                   else
                                                                   { /*ADDS OPERATION TO QUEUE*/
                                                                     MetaData data(objNum, process,IDChar, 0);
+                                                                    data.time = GetTotalTime(data);
+                                                                    //cout << "Total Time: "<< data.time <<endl;
                                                                     items.push_back(data);
-                                                                    operations.push_back(data); // LOADS To THE QUEUE
+                                                                    operations.push(data); // LOADS To THE QUEUE
+                                                                    OperationProcess(data);
                                                                     //cout <<"Just added data " <<endl;
                                                                   }
 
@@ -384,35 +402,35 @@ int Meta::SkipWhiteSpace (string line, unsigned index)
 }
 
 // Gets the total time for each meta component
-void Meta::GetTotalTime()
+int Meta::GetTotalTime(MetaData Operation)
 {
-     
-      int cycleTime;
+  int cycleTime,cycleAmount = Operation.cycles;
+  char ID = Operation.processID;
+ // int toThird = pow(10,3);
 
-      for (auto it = items.begin(); it != items.end(); it++)
-      {
-            char ID = it->processID;
-            if (ID == 'P')
-            {
-             cycleTime = ConfigObj.GetTime("Processor");
-            }
-            else if (ID == 'M')
-            {
-              cycleTime = ConfigObj.GetTime("Memory");
-            }
-            else if(ID =='I' || ID =='O')
-            {
-              cycleTime = ConfigObj.GetTime(it->descriptor);
-              
-            }
+  string process;
 
-            it->time = it->cycles * cycleTime;
+  switch(ID)
+  {
+    case 'P':
+    process = "Processor";
+    break;
 
-            
+    case 'M':
+    process = "Memory";
+    break;
 
-      }
+    default: // case 'I':// || 'O':
+    process = Operation.descriptor;
+   
+  };
 
+  cycleTime = ConfigObj.GetTime(process);
+  return ((cycleTime * cycleAmount)*1000);   
+    
 }
+
+
 int Meta::FindChar(string line, int position, char item) 
 {
   return 0;
@@ -426,11 +444,19 @@ int Meta::FindChar(string line, int position, char item)
 // not sure why -_-
 void Meta::output(fstream &Data)
 {
+  //MetaData temp;
+ // cout <<"In Output" <<endl;
 
  if(ConfigObj.fileStat)
  {
+   while(!OutPutFile.empty())
+   {
+    //cout <<"File output" <<endl;
+    Data << OutPutFile.front() << "\n";
+    OutPutFile.pop();
+   }
 
-      Data <<"Meta-Data Metrics \n"; 
+     /* Data <<"Meta-Data Metrics \n"; 
         
             if (metaEmpty)
             {
@@ -446,11 +472,17 @@ void Meta::output(fstream &Data)
             if(metaBadData)
             {
              Data << error <<"\n";
-            }
+            }*/
        
    }
    if(ConfigObj.monitor)
    {
+     while(!OutPutMon.empty())
+     {
+      cout << OutPutMon.front()<< endl;
+      OutPutMon.pop();
+     }
+   /*
       cout <<"Meta-Data Metrics" <<endl;
       for (auto it = items.begin(); it != items.end(); it++)
                {
@@ -461,8 +493,8 @@ void Meta::output(fstream &Data)
             if(ConfigObj.badData)
             {
              cout << error <<"\n";
-            } 
-   }
+            } */
+   //}
  }
        
 
@@ -471,7 +503,7 @@ void Meta::output(fstream &Data)
 
 char Meta::GetIDChar(string line, int position)
 {
-  //cout <<"Index in getID :" << position <<endl;
+  //cosut <<"Index in getID :" << position <<endl;
   int index = updateIndex( line,  position);
  // cout <<"Update index" <<endl;
    //cout << "Returned with index" <<endl;
@@ -540,9 +572,97 @@ int Meta::FindLeftPar(string line, int position)
 }
 
 //Starts the clock on the program
-void StartTime()
+void Meta::StartTimer()
 {
   startTime = clock();
+  PostTime("Simulator program starting");
+}
+
+
+void Meta::OperationProcess(MetaData Operation)
+{
+  char ID = Operation.processID;
+  string allocate;
+  int MemoryLocation;
+  //string processStat;
+  if (ID == 'A')
+  {
+    if (Operation.descriptor == "start")
+    {
+      PostTime(("OS: Starting Process" + processCount));
+    }
+    else
+    {
+      PostTime(("OS: Removing Process " + processCount));
+    }
+  }
+  else if(ID == 'P')
+  {
+   // processStat = ;
+    PostTime(("Process " + processCount + string (" : Start processing action ")));
+    //post time
+    cout <<"Time to delay by " <<Operation.time <<endl;
+    usleep(Operation.time);
+    PostTime(("Process " + processCount + string (" : End processing action ")));
+    //run timer
+    //post time
+
+  }
+  else if(ID == 'M')
+  {
+    PostTime(("Process " + processCount + string (": allocating memory")));
+    MemoryLocation = ConfigObj.GetTime("System");
+    usleep(Operation.time);
+    MemoryLocation = allocateMemory(MemoryLocation);
+    allocate = to_string(MemoryLocation);
+    PostTime(("Process " +  processCount + string (": memory allocated at ") + allocate));
+    //post time
+    //allocate 
+    //post time
+
+  }
+  else // OPERATION IS I/O
+  {
+    //post start
+    // create thread with run timer for thread
+    // join threads
+    //post end
+  }
+
+}
+
+void Meta::PostTime(string Message)
+{
+  currTime = clock() - startTime;
+  float time = ((float)currTime/CLOCKS_PER_SEC);
+  cout <<"Current Time: " <<time <<endl;
+  string Time = to_string(time);  
+
+  cout <<"Message : " << Message <<endl;
+  if(ConfigObj.fileStat)
+  {
+   OutPutFile.push(Time + " - " + Message);
+  }
+  if(ConfigObj.monitor)
+  {
+    OutPutMon.push(Time+ " - " + Message);
+  }
+}
+
+
+
+//PROVIDED BY THE TA VINEETH
+unsigned int Meta::allocateMemory( int totMem )
+{
+  unsigned int address;
+  
+  srand(time(NULL));
+  
+  if( totMem > 0 )
+  {
+    address = rand() % totMem;
+  }
+  return address;
 }
 
 #endif

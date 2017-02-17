@@ -1,5 +1,5 @@
 
-
+// Must hold the memory system amount and convert into kilobytes
 
 #ifndef CONFIG_H
 #define CONFIG_H
@@ -30,7 +30,7 @@ class Config
       	void output(fstream &outputFile);
       	bool GetFile();
       	bool GetMonitor();
-
+            int ConvertMemory(string amount, int memory);// Check if the the memory amount is kbytes and if not convert
       	string Getoutput();   
 
       	friend class Meta;

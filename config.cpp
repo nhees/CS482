@@ -102,7 +102,7 @@ void Config::GetData()
 
        }
        else if((first == "Processor")|| (first =="Monitor")||(first =="Hard")
-       	|| (first =="Printer")|| (first =="Keyboard")||(first =="Memory")||(first =="Mouse")||(first =="Speaker"))
+       	|| (first =="Printer")|| (first =="Keyboard")||(first =="Memory")||(first =="Mouse")||(first =="Speaker") ||(first == "System"))
        {
        	
        	AddObject(first); 
@@ -136,10 +136,10 @@ void Config::AddObject(string objectName)
     } 
 
 void Config::GetLastWord(string firstWord)
-   {
+   {// IF system then check if kbytes
    	string data, temp, lastWord;
    	unsigned position;
-    int time;
+    int time, memoryAmount;
    	getline(file, data);
      
      position = data.rfind(' ');
@@ -194,6 +194,24 @@ void Config::GetLastWord(string firstWord)
         folderBool = true;
      		outputStr = lastWord.substr(position+1, lastWord.size());
      	 }
+     }
+     else if(firstWord =="System")
+     {
+
+       memoryAmount = stoi(lastWord,NULL, 10);
+       //NEED TO GET THE SIZE
+        
+       position = data.find('(');
+       char current = data.at(position + 1);
+       while (current != ')')
+       {
+        temp.push_back(current);
+        position ++;
+        current = data.at(position);
+       }
+       memoryAmount = ConvertMemory(temp,memoryAmount);
+
+       Object tempObj(memoryAmount, firstWord);
      }
      else   
       {
@@ -314,5 +332,22 @@ void Config::output(fstream &File)
 
     
 
+}
+
+int Config::ConvertMemory(string size, int memory)
+{
+  if (size == "kbytes")
+  {
+    return memory;
+  }
+  else if(size == "Gbytes")
+  {
+   return (memory * 1000000);
+  }
+  else if(size == "Mbytes")
+  {
+    return (memory *1000);
+  }
+  return 0;
 }
 #endif

@@ -4,8 +4,13 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <unistd.h>
 #include <vector>
-#include <ctime.h>
+#include <math.h>
+#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/time.h>
 #include <queue>
 #include "metadata.h"
 #include "config.h"
@@ -42,15 +47,18 @@ class Meta
       	int GetNumber(string line, int position);
          int SkipWhiteSpace (string line, unsigned index);
          int FindChar (string line, int positon, char item);
-         void GetTotalTime();
+         int GetTotalTime(MetaData operation);
          void output(fstream &File);
          char GetIDChar(string line, int position);
          int FindLeftPar(string line, int position);
          int updateIndex(string line, int position);
-         void StartTime();
+         void StartTimer();
+         void PostTime(string Message);
+         void OperationProcess(MetaData Process);
+         //Provided to students from TA Vineeth
+         unsigned int allocateMemory( int totMem );
          // allocate memory
          // I/O thread create
-         //start Time
          // End time
          // post Time 
          // get ID
@@ -63,6 +71,7 @@ class Meta
 
       private:
       	bool  metaEnd, metaEmpty, metaBadData, metaClosed;
+         int processCount;
          clock_t currTime, startTime;
       	string error, meta;
       	fstream metaFile;
@@ -70,7 +79,7 @@ class Meta
          PCB PCBSTATE;      	//char * config;
       	vector <MetaData> items; // should I make this a pointer?????
          queue <MetaData> operations;
-         queue <string> OutPut;
+         queue <string> OutPutFile, OutPutMon;
      
 
 

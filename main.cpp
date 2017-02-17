@@ -34,7 +34,7 @@ int main(int ac, char * arg[])
        {
        	
          Meta MetaFile(metaFile, ConfigFile);
-         
+          
          output(ConfigFile, MetaFile);
          
        }
@@ -50,7 +50,7 @@ int main(int ac, char * arg[])
      	cout << fileExt <<endl;
      	cout << "Config File extension isn't right" << endl;
      }
-    
+      //cout <<"About to return 0" <<endl;
      return 0;
    }
 
@@ -79,9 +79,9 @@ void output(Config &ConfigFile, Meta &MetaFile)
    		
    		MetaFile.output(OutPut);
    	}
-
+    // cout <<"About to close output file " <<endl;
    	 OutPut.close();
    }
  }
 
-}# CS446
+}
