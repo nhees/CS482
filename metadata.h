@@ -10,12 +10,12 @@ using namespace std;
 
 struct MetaData
    {
-    MetaData(int cycles, string descriptior, char processID, int time);
+    MetaData(int cycles, string descriptor, char processID, float time);
 
     string descriptor; 
     char processID;
     int cycles;
-    int time;
+    float time;
    };
 
 #endif

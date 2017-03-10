@@ -5,14 +5,21 @@
 #include <fstream>
 #include <string>
 #include <queue>
+#include <stdio.h>
+#include <stdlib.h>
 #include "meta.h"
 
 using namespace std;
 
 //constructor
 Meta::Meta(string fileName, Config configObj)
-      :metaEnd(false), metaEmpty(true),metaBadData(false), metaClosed(false), meta(fileName), ConfigObj(configObj)
+      :metaEnd(false), metaEmpty(true),metaBadData(false), metaClosed(false),memoryCall(0),PrinterCount(0), 
+      HardCount(0), meta(fileName), ConfigObj(configObj)
       {
+       memorySize = ConfigObj.GetTime("MemorySize");
+       HardLimit =ConfigObj.GetTime("Hard#");
+       PrinterLimit = ConfigObj.GetTime("Printer#");
+       //locker = PTHREAD_MUTEX_INITIALIZER;
        
        MetaOpenFile();
       
@@ -29,7 +36,7 @@ Meta::~Meta()
             {
               operations.pop();
             }
-            //cout <<"In meta deconstructor" <<endl;
+//            scout <<"In meta deconstructor" <<endl;
       }
 
 // opens the file and then calls getData and get total time
@@ -50,7 +57,8 @@ void Meta::MetaOpenFile()
        if(first == "Start")
        {
           StartTimer();
-          metaBadData = !MetaGetData();  // make it bool
+          metaBadData = !MetaGetData();
+          cout <<"Parsed data" <<endl;  // make it bool
     //      GetTotalTime();
       
        }
@@ -73,6 +81,9 @@ void Meta::MetaCloseFile()
 
       	
 // Parses the meta Data document
+   // First checks to make sure that the document starts with S(start) and A(start)
+   // From there goes to collect the rest of the operations and add them into a queue.
+
 bool Meta::MetaGetData()
    {
      string line, process;
@@ -95,8 +106,8 @@ bool Meta::MetaGetData()
        error = "File is Empty"; // Error message if the statement fails
       if(currChar == 'S')
       {
-
-        metaEmpty = false;
+         PCBSTATE.CURRENT = START;
+         metaEmpty = false;
          IDChar = currChar;   
             
        
@@ -190,6 +201,7 @@ bool Meta::MetaGetData()
                                                             //checks if the number is valid
                                                             if(objNum>= 0)
                                                             {      /*CHECKS IF PROCESS IS ENDING*/
+                                                               PCBSTATE.CURRENT = READY;
                                                                    if(IDChar == 'A')
                                                                      {
                                                                          if (process == "end")
@@ -228,6 +240,7 @@ bool Meta::MetaGetData()
                                                                                     MetaData dataC(objNum, process,IDChar, 0);
                                                                                     operations.push(dataC);
                                                                                     OperationProcess(dataC);
+                                                                                    PCBSTATE.CURRENT = EXIT;
 
                                                                                    }
 
@@ -242,11 +255,10 @@ bool Meta::MetaGetData()
                                                                   { /*ADDS OPERATION TO QUEUE*/
                                                                     MetaData data(objNum, process,IDChar, 0);
                                                                     data.time = GetTotalTime(data);
-                                                                    //cout << "Total Time: "<< data.time <<endl;
                                                                     items.push_back(data);
                                                                     operations.push(data); // LOADS To THE QUEUE
                                                                     OperationProcess(data);
-                                                                    //cout <<"Just added data " <<endl;
+                                                                    PCBSTATE.CURRENT = EXIT;
                                                                   }
 
                                                             }
@@ -283,8 +295,9 @@ bool Meta::MetaGetData()
          }
       
      } // second line if
-
+     OutPutFile.push(error);
      return false; // SOMETHING WAS INCORRECT
+
 
   
 }
@@ -348,6 +361,8 @@ string Meta::GetDescriptor(char objectName, string line, int position)
      return "Bad";
    }
 
+   
+
 //retrieves the cycles for the component      	
 int Meta::GetNumber(string line, int position)
    {
@@ -385,6 +400,7 @@ int Meta::GetNumber(string line, int position)
 
       
    }
+
 //skips all of the white space
 int Meta::SkipWhiteSpace (string line, unsigned index)
 {
@@ -402,11 +418,11 @@ int Meta::SkipWhiteSpace (string line, unsigned index)
 }
 
 // Gets the total time for each meta component
-int Meta::GetTotalTime(MetaData Operation)
+float Meta::GetTotalTime(MetaData Operation)
 {
-  int cycleTime,cycleAmount = Operation.cycles;
+  float cycleTime,cycleAmount = Operation.cycles;
   char ID = Operation.processID;
- // int toThird = pow(10,3);
+
 
   string process;
 
@@ -425,8 +441,8 @@ int Meta::GetTotalTime(MetaData Operation)
    
   };
 
-  cycleTime = ConfigObj.GetTime(process);
-  return ((cycleTime * cycleAmount)*1000);   
+  cycleTime = (ConfigObj.GetTime(process)* .001);
+  return (cycleTime * cycleAmount);//*.001);  // To put into milliSeconds 
     
 }
 
@@ -444,57 +460,29 @@ int Meta::FindChar(string line, int position, char item)
 // not sure why -_-
 void Meta::output(fstream &Data)
 {
-  //MetaData temp;
- // cout <<"In Output" <<endl;
-
+  
+//cout <<"In output" <<endl;
  if(ConfigObj.fileStat)
  {
+  //cout <<"in file output" <<endl;
    while(!OutPutFile.empty())
    {
-    //cout <<"File output" <<endl;
+    
     Data << OutPutFile.front() << "\n";
     OutPutFile.pop();
    }
 
-     /* Data <<"Meta-Data Metrics \n"; 
-        
-            if (metaEmpty)
-            {
-              Data <<"Meta File was Empty \n";
-            }
-          else
-           {
-             for (auto it = items.begin(); it != items.end(); it++)
-               {
-                  Data << it->processID << "(" << it->descriptor <<")" << it->cycles;
-                  Data << " - " << it->time <<" ms \n";
-               }
-            if(metaBadData)
-            {
-             Data << error <<"\n";
-            }*/
        
-   }
-   if(ConfigObj.monitor)
+ }
+ if(ConfigObj.monitor)
    {
+    //cout <<"Monitor stuff" <<endl;
      while(!OutPutMon.empty())
      {
       cout << OutPutMon.front()<< endl;
       OutPutMon.pop();
      }
-   /*
-      cout <<"Meta-Data Metrics" <<endl;
-      for (auto it = items.begin(); it != items.end(); it++)
-               {
-
-                  cout << it->processID << "(" << it->descriptor <<")" << it->cycles;
-                  cout << " - " << it->time <<" ms \n";
-               }
-            if(ConfigObj.badData)
-            {
-             cout << error <<"\n";
-            } */
-   //}
+  
  }
        
 
@@ -503,26 +491,16 @@ void Meta::output(fstream &Data)
 
 char Meta::GetIDChar(string line, int position)
 {
-  //cosut <<"Index in getID :" << position <<endl;
+  
   int index = updateIndex( line,  position);
- // cout <<"Update index" <<endl;
-   //cout << "Returned with index" <<endl;
+ 
   if (index >= 0)
   {
     char current = line.at(index);
-    //cout <<"returning at index : " <<index << "And current: " <<current <<endl;
     return current;
   }
 
-   
   
- /*  cout <<"Found : " << current <<endl;
-  if (current == 'S' || current == 'A' || current == 'P' || current =='M'
-       || current == 'I' || current == 'O')
-  {
-    return current;
-  }*/
-  //cout <<"returning invalid char" <<endl;
   return 'E';
 
 }
@@ -530,14 +508,14 @@ char Meta::GetIDChar(string line, int position)
 
 int Meta::updateIndex (string line, int position)
 {
- // cout <<"Position: " << position <<endl;
+ 
   int  index = 0;
      index = position;
   int listLength = line.size() - 1;
-   // cout <<"In Update Index" <<endl; 
+   
   if(index >= 0) // Checking if given a valid input 
   {
-    //cout <<"Index is valid "<<index <<endl;
+    
   char current = line.at(position);
   while(current != 'A' && current != 'S' && current != 'P' && current != 'M' 
     && current != 'I' && current != 'O' && index != listLength)
@@ -546,15 +524,13 @@ int Meta::updateIndex (string line, int position)
     current  = line.at(index);
     
   }
-  //cout <<"Finished while " <<endl;
-
+ 
    if(index != listLength)
    {
-    // cout <<"returning index of valid amount" <<endl;
     return index;
    }
   }
-   //cout <<"Returning invalid index" <<endl;
+   
    return -1;
 
 }
@@ -581,14 +557,20 @@ void Meta::StartTimer()
 
 void Meta::OperationProcess(MetaData Operation)
 {
+ // cout <<"Processing info" <<endl;
   char ID = Operation.processID;
-  string allocate;
+  string allocate, description;
+  stringstream message, process;
   int MemoryLocation;
-  //string processStat;
+ 
+  PCBSTATE.CURRENT = RUNNING;
+  
+
   if (ID == 'A')
   {
     if (Operation.descriptor == "start")
     {
+      
       PostTime(("OS: Starting Process" + processCount));
     }
     else
@@ -598,47 +580,97 @@ void Meta::OperationProcess(MetaData Operation)
   }
   else if(ID == 'P')
   {
-   // processStat = ;
-    PostTime(("Process " + processCount + string (" : Start processing action ")));
-    //post time
-    cout <<"Time to delay by " <<Operation.time <<endl;
-    usleep(Operation.time);
-    PostTime(("Process " + processCount + string (" : End processing action ")));
-    //run timer
-    //post time
+   
+
+    message <<"Process "  <<processCount <<string(" : Start processing action");
+   
+    PostTime(message.str());
+
+    message.str(string());
+    message.clear();
+    
+    RunTimer(Operation.time);
+
+    message << "Process " << processCount << string(" : End processing action");
+    PostTime(message.str());
 
   }
+
   else if(ID == 'M')
   {
-    PostTime(("Process " + processCount + string (": allocating memory")));
+    message << "Process " << processCount << string(" : allocating memory");
+    PostTime(message.str());
     MemoryLocation = ConfigObj.GetTime("System");
-    usleep(Operation.time);
+    cout <<"Memory Location" <<MemoryLocation<<endl;
+    RunTimer(Operation.time);
     MemoryLocation = allocateMemory(MemoryLocation);
+    
     allocate = to_string(MemoryLocation);
-    PostTime(("Process " +  processCount + string (": memory allocated at ") + allocate));
-    //post time
-    //allocate 
-    //post time
+    message.str(string());
+    message.clear();
+    message<<"Process " <<processCount << string (": memory allocated at 0X") <<allocate;
+    PostTime(message.str());
+    
 
   }
   else // OPERATION IS I/O
   {
-    //post start
-    // create thread with run timer for thread
-    // join threads
-    //post end
+
+    /*Need a thread for the operation*/
+    pthread_t thread;
+    if (Operation.descriptor  == "printer") 
+    {
+      if (PrinterLimit < PrinterCount)
+      {
+        PrinterCount = 0;
+      }
+      description = to_string(PrinterCount);
+      message <<"Process " <<processCount << ": start PRNT " << description;
+      PrinterCount ++;
+    }       
+    else if (Operation.descriptor == "hard drive")
+    {
+      if(HardLimit < HardCount)
+      {
+        HardCount = 0;
+      }
+      description = to_string(HardCount);
+      message << "Process " <<processCount<< ": start HDD " << description;//Operation.descriptor = ("HDD " + HardCount);
+      HardCount++;
+    }
+    else
+    {
+     message << "Process " << processCount << string(": start " + Operation.descriptor + "action");
+    }
+    PostTime(message.str());    
+    //Thread work
+   
+
+//     pthread_mutex_lock(&locker);
+     pthread_create(&thread, NULL, ThreadTimer , &Operation.time); //(void *) &timeNum); //, (void *) timeNum); // FIX THE VOID * ISSUES
+    
+     pthread_join(thread, NULL);
+  //   pthread_mutex_unlock(&locker);
+
+    // clears the sstring and posts the new message indicating the end of the action
+   message.str(string());
+   message.clear();
+    message << "Process " << processCount << string(": end of action" );
+    PostTime(message.str());
   }
 
 }
 
 void Meta::PostTime(string Message)
 {
+  //cout <<"In post time" <<endl;
+  PCBSTATE.CURRENT = WAITING;
   currTime = clock() - startTime;
   float time = ((float)currTime/CLOCKS_PER_SEC);
-  cout <<"Current Time: " <<time <<endl;
+  //cout <<"Current Time: " <<time <<endl;
   string Time = to_string(time);  
 
-  cout <<"Message : " << Message <<endl;
+  //cout <<"Message : " << Message <<endl;
   if(ConfigObj.fileStat)
   {
    OutPutFile.push(Time + " - " + Message);
@@ -654,7 +686,23 @@ void Meta::PostTime(string Message)
 //PROVIDED BY THE TA VINEETH
 unsigned int Meta::allocateMemory( int totMem )
 {
-  unsigned int address;
+  char * hex = new char [8]; //NULL; //[8];
+  stringstream num;
+  int address = memoryCall * memorySize; // get memory address
+  memoryCall ++;
+
+  if (totMem > address)
+  {
+    //cout <<"Mkaing memory" <<endl;
+    sprintf(hex,"%x",address);//itoa(address, hex, 16);
+    //cout <<"Made it " <<endl;
+    //cout <<"Hex" <<hex <<endl;
+    num <<hex;
+    num >>address;
+  } 
+  delete [] hex;
+  return address;
+    /*unsigned int address;
   
   srand(time(NULL));
   
@@ -662,7 +710,27 @@ unsigned int Meta::allocateMemory( int totMem )
   {
     address = rand() % totMem;
   }
-  return address;
+  return address;*/
 }
+
+
+
+void RunTimer(float time)
+{
+  time *= CLOCKS_PER_SEC;
+  time += clock(); // Given current time add the extra time to it
+
+  while (clock() < time) continue; 
+}
+
+
+void  *ThreadTimer(void * time)
+{
+  float timer = *((float*) time);
+  RunTimer(timer);
+  pthread_exit(NULL);
+
+}
+
 
 #endif

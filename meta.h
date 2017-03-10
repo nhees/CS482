@@ -3,9 +3,12 @@
 
 #include <iostream>
 #include <fstream>
+#include <pthread.h>
+#include <sstream>
 #include <string>
 #include <unistd.h>
 #include <vector>
+//#include <mutex>
 #include <math.h>
 #include <time.h>
 #include <stdio.h>
@@ -17,10 +20,7 @@
 
 using namespace std;
 
-// What the heck is PCB states do I create them myself or use pid_t
-// combine all of the data types into my h file for convienence 
-// delete the config output 
-// correct the total time so that it does it in the parsing
+
 
 enum STATE
          {
@@ -47,7 +47,7 @@ class Meta
       	int GetNumber(string line, int position);
          int SkipWhiteSpace (string line, unsigned index);
          int FindChar (string line, int positon, char item);
-         int GetTotalTime(MetaData operation);
+         float GetTotalTime(MetaData operation);
          void output(fstream &File);
          char GetIDChar(string line, int position);
          int FindLeftPar(string line, int position);
@@ -57,12 +57,15 @@ class Meta
          void OperationProcess(MetaData Process);
          //Provided to students from TA Vineeth
          unsigned int allocateMemory( int totMem );
-         // allocate memory
+         
+         
+         void * ThreadLaunch(void * time);
+        
          // I/O thread create
          // End time
          // post Time 
          // get ID
-         //runTime
+         
          //thread run time
          
        
@@ -71,7 +74,7 @@ class Meta
 
       private:
       	bool  metaEnd, metaEmpty, metaBadData, metaClosed;
-         int processCount;
+         int processCount, memoryCall,memorySize, PrinterCount, PrinterLimit, HardCount, HardLimit;
          clock_t currTime, startTime;
       	string error, meta;
       	fstream metaFile;
@@ -80,12 +83,14 @@ class Meta
       	vector <MetaData> items; // should I make this a pointer?????
          queue <MetaData> operations;
          queue <string> OutPutFile, OutPutMon;
-     
+         //pthread_mutex_t locker;
 
 
    };
 
-  
+  void RunTimer(float time);
+  void *ThreadTimer(void* time);
+ 
 
 
 #endif

@@ -4,7 +4,7 @@
 #include "metadata.h"
 
 
-MetaData :: MetaData(int cycle, string descript, char ID, int totalTime)
+MetaData :: MetaData(int cycle, string descript, char ID, float totalTime)
 	:descriptor(descript), processID(ID), cycles(cycle), time(totalTime)
  {
    

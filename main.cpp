@@ -50,7 +50,8 @@ int main(int ac, char * arg[])
      	cout << fileExt <<endl;
      	cout << "Config File extension isn't right" << endl;
      }
-      //cout <<"About to return 0" <<endl;
+      cout <<"About to finish the program" <<endl;
+      
      return 0;
    }
 
@@ -59,7 +60,7 @@ int main(int ac, char * arg[])
 
 void output(Config &ConfigFile, Meta &MetaFile)
 {
- // vector<MetaData> MetaVect = MetaFile.GetItems();
+ 
   fstream OutPut;
   
   string DataFile;
@@ -73,13 +74,13 @@ void output(Config &ConfigFile, Meta &MetaFile)
   if(OutPut.good())
    {
 
-   	ConfigFile.output(OutPut);
+   	//ConfigFile.output(OutPut);
    	if(!ConfigFile.getBadData())
    	{
    		
    		MetaFile.output(OutPut);
    	}
-    // cout <<"About to close output file " <<endl;
+   
    	 OutPut.close();
    }
  }

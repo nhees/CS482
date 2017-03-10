@@ -1,12 +1,12 @@
-CC = g++
+CC = g++ -std=c++0x
 DEBUG = -g
 CFLAGS = -std=c++11 -Wall -c $(DEBUG)
 LFLAGS = -std=c++11 -Wall $(DEBUG)
 
-sim02 : main.o config.o object.o meta.o metadata.o
-	$(CC) $(LFLAGS) main.o config.o object.o meta.o metadata.o -o sim02
+sim03 : main.o config.o object.o meta.o metadata.o
+	$(CC) $(LFLAGS) main.o config.o object.o meta.o metadata.o -o sim03 -std=c++0x -pthread
 
-PA01.o : config.h meta.h
+PA03.o : config.h meta.h
 	$(CC) $(CFLAGS) main.cpp
 
 config.o : config.cpp config.h
@@ -21,5 +21,5 @@ meta.o : meta.cpp meta.h
 metadata.o : metadata.cpp metadata.h
 	$(CC) $(CFLAGS) metadata.cpp
 
-clean:
-	\rm *.o PA1
+clean :
+	\rm *.o sim03

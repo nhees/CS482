@@ -104,16 +104,37 @@ void Config::GetData()
        else if((first == "Processor")|| (first =="Monitor")||(first =="Hard")
        	|| (first =="Printer")|| (first =="Keyboard")||(first =="Memory")||(first =="Mouse")||(first =="Speaker") ||(first == "System"))
        {
-       	
-       	AddObject(first); 
+        if ((first == "Printer") || (first == "Memory") || (first =="Hard"))
+        {
+          file >> temp;
+          if ((first == "Printer") && (temp == "quantity:"))
+          {
+            first = "Printer#";
+          }
+          else if(first == "Hard")
+          {
+            file >> temp; 
+            if (temp == "quantity:")
+            {
+              first = "Hard#";
+            }
+
+          }
+          else if((first == "Memory") && (temp == "block"))
+          {
+            first = "MemorySize";
+          }
+        }// end of if to get quantities
+         
+       	  AddObject(first); 
        	
        }
        else if((first == "Log" )|| (first =="Log:"))
        {
-       	AddObject(first);
-        
+       	AddObject(first);  
        
        }
+
        else if (first == "End")
        {
          
@@ -137,10 +158,11 @@ void Config::AddObject(string objectName)
 
 void Config::GetLastWord(string firstWord)
    {// IF system then check if kbytes
-   	string data, temp, lastWord;
+   	string data, temp,test, lastWord;
    	unsigned position;
     int time, memoryAmount;
    	getline(file, data);
+   // cout << "Line: " <<data << "First word: " <<firstWord <<endl;
      
      position = data.rfind(' ');
  
@@ -153,9 +175,10 @@ void Config::GetLastWord(string firstWord)
      }
      else if (firstWord == "Log:" )
      {
-       
+      cout <<"In log" <<endl;       
      	 if (lastWord == "Both")
-     	 {
+     	 { 
+
          log = "Both";
          monitor = true;
          fileStat = true;
@@ -167,6 +190,7 @@ void Config::GetLastWord(string firstWord)
      	 }
      	else if(lastWord == "File")
      	 {
+        //cout <<"Found both" <<endl;
          log = "File";
          fileStat = true;
      	 }
@@ -197,8 +221,9 @@ void Config::GetLastWord(string firstWord)
      }
      else if(firstWord =="System")
      {
-
-       memoryAmount = stoi(lastWord,NULL, 10);
+       //cout <<"Data: " <<data <<endl;
+       memoryAmount = stoi(lastWord,NULL, 10);\
+       //cout <<"Memory amount "<< memoryAmount <<endl;
        //NEED TO GET THE SIZE
         
        position = data.find('(');
@@ -209,9 +234,11 @@ void Config::GetLastWord(string firstWord)
         position ++;
         current = data.at(position);
        }
-       memoryAmount = ConvertMemory(temp,memoryAmount);
+      // memoryAmount = ConvertMemory(temp,memoryAmount);
+        cout <<"Memory amount "<< memoryAmount <<endl;
 
        Object tempObj(memoryAmount, firstWord);
+       computerList.push_back(tempObj);
      }
      else   
       {
@@ -263,7 +290,7 @@ int Config::GetTime(string ID)
     //cout <<"Iterator process " <<it->objectName <<endl;
     it++;
   }
-  
+ // cout <<"Cycle time: " << it->cycleTime <<endl;
 
   return it->cycleTime;
 }      
@@ -279,6 +306,7 @@ string Config::Getoutput()
 // it is passed the fstream and then outputted accordingly
 void Config::output(fstream &File)
 {
+
   if (fileStat)
    {
     File <<"Configuration File Data \n";
