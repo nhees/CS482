@@ -50,7 +50,7 @@ int main(int ac, char * arg[])
      	cout << fileExt <<endl;
      	cout << "Config File extension isn't right" << endl;
      }
-      cout <<"About to finish the program" <<endl;
+      
       
      return 0;
    }

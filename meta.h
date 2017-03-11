@@ -8,6 +8,7 @@
 #include <string>
 #include <unistd.h>
 #include <vector>
+#include <semaphore.h>
 //#include <mutex>
 #include <math.h>
 #include <time.h>
@@ -76,13 +77,14 @@ class Meta
       	bool  metaEnd, metaEmpty, metaBadData, metaClosed;
          int processCount, memoryCall,memorySize, PrinterCount, PrinterLimit, HardCount, HardLimit;
          clock_t currTime, startTime;
-      	string error, meta;
-      	fstream metaFile;
+      	 string error, meta;
+      	 fstream metaFile;
          Config ConfigObj;
          PCB PCBSTATE;      	//char * config;
-      	vector <MetaData> items; // should I make this a pointer?????
+      	 vector <MetaData> items; // should I make this a pointer?????
          queue <MetaData> operations;
          queue <string> OutPutFile, OutPutMon;
+	 sem_t semaphore;
          //pthread_mutex_t locker;
 
 

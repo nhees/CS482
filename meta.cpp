@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include "meta.h"
 
+
 using namespace std;
 
 //constructor
@@ -58,8 +59,7 @@ void Meta::MetaOpenFile()
        {
           StartTimer();
           metaBadData = !MetaGetData();
-          cout <<"Parsed data" <<endl;  // make it bool
-    //      GetTotalTime();
+         
       
        }
        else 
@@ -74,7 +74,7 @@ void Meta::MetaOpenFile()
 // closes the file
 void Meta::MetaCloseFile() 
    {
-    cout <<"Closing the file " <<endl;
+  
      metaFile.close();
      metaClosed = true;
    }
@@ -557,7 +557,7 @@ void Meta::StartTimer()
 
 void Meta::OperationProcess(MetaData Operation)
 {
- // cout <<"Processing info" <<endl;
+
   char ID = Operation.processID;
   string allocate, description;
   stringstream message, process;
@@ -601,7 +601,7 @@ void Meta::OperationProcess(MetaData Operation)
     message << "Process " << processCount << string(" : allocating memory");
     PostTime(message.str());
     MemoryLocation = ConfigObj.GetTime("System");
-    cout <<"Memory Location" <<MemoryLocation<<endl;
+  
     RunTimer(Operation.time);
     MemoryLocation = allocateMemory(MemoryLocation);
     
@@ -640,18 +640,18 @@ void Meta::OperationProcess(MetaData Operation)
     }
     else
     {
-     message << "Process " << processCount << string(": start " + Operation.descriptor + "action");
+     message << "Process " << processCount << string(": start " + Operation.descriptor + " action");
     }
     PostTime(message.str());    
     //Thread work
    
-
-//     pthread_mutex_lock(&locker);
+    
+    sem_init(&semaphore,0,0);
      pthread_create(&thread, NULL, ThreadTimer , &Operation.time); //(void *) &timeNum); //, (void *) timeNum); // FIX THE VOID * ISSUES
     
      pthread_join(thread, NULL);
-  //   pthread_mutex_unlock(&locker);
-
+  
+     sem_destroy(&semaphore);
     // clears the sstring and posts the new message indicating the end of the action
    message.str(string());
    message.clear();
@@ -663,14 +663,14 @@ void Meta::OperationProcess(MetaData Operation)
 
 void Meta::PostTime(string Message)
 {
-  //cout <<"In post time" <<endl;
+  
   PCBSTATE.CURRENT = WAITING;
   currTime = clock() - startTime;
   float time = ((float)currTime/CLOCKS_PER_SEC);
-  //cout <<"Current Time: " <<time <<endl;
+  
   string Time = to_string(time);  
 
-  //cout <<"Message : " << Message <<endl;
+ 
   if(ConfigObj.fileStat)
   {
    OutPutFile.push(Time + " - " + Message);
@@ -683,34 +683,24 @@ void Meta::PostTime(string Message)
 
 
 
-//PROVIDED BY THE TA VINEETH
+
 unsigned int Meta::allocateMemory( int totMem )
 {
-  char * hex = new char [8]; //NULL; //[8];
+  char * hex = new char [8]; 
   stringstream num;
   int address = memoryCall * memorySize; // get memory address
   memoryCall ++;
 
   if (totMem > address)
   {
-    //cout <<"Mkaing memory" <<endl;
     sprintf(hex,"%x",address);//itoa(address, hex, 16);
-    //cout <<"Made it " <<endl;
-    //cout <<"Hex" <<hex <<endl;
+   
     num <<hex;
     num >>address;
   } 
   delete [] hex;
   return address;
-    /*unsigned int address;
-  
-  srand(time(NULL));
-  
-  if( totMem > 0 )
-  {
-    address = rand() % totMem;
-  }
-  return address;*/
+    
 }
 
 

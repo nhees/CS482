@@ -23,7 +23,7 @@ Config ::Config(const Config &obj)
   
   for(auto it = obj.computerList.begin(); it != obj.computerList.end(); it++)
   {
-    //cout <<it->objectName <<endl;
+   
     computerList.push_back(*it);
     
   }
@@ -175,7 +175,7 @@ void Config::GetLastWord(string firstWord)
      }
      else if (firstWord == "Log:" )
      {
-      cout <<"In log" <<endl;       
+         
      	 if (lastWord == "Both")
      	 { 
 
@@ -190,7 +190,7 @@ void Config::GetLastWord(string firstWord)
      	 }
      	else if(lastWord == "File")
      	 {
-        //cout <<"Found both" <<endl;
+        
          log = "File";
          fileStat = true;
      	 }
@@ -204,7 +204,7 @@ void Config::GetLastWord(string firstWord)
      }
      else if(firstWord == "Log")
      {
-      //prevPos = position;
+     
      	position = lastWord.find('/');
       
      	 if(position == string::npos)
@@ -221,9 +221,9 @@ void Config::GetLastWord(string firstWord)
      }
      else if(firstWord =="System")
      {
-       //cout <<"Data: " <<data <<endl;
+
        memoryAmount = stoi(lastWord,NULL, 10);\
-       //cout <<"Memory amount "<< memoryAmount <<endl;
+      
        //NEED TO GET THE SIZE
         
        position = data.find('(');
@@ -234,9 +234,7 @@ void Config::GetLastWord(string firstWord)
         position ++;
         current = data.at(position);
        }
-      // memoryAmount = ConvertMemory(temp,memoryAmount);
-        cout <<"Memory amount "<< memoryAmount <<endl;
-
+      
        Object tempObj(memoryAmount, firstWord);
        computerList.push_back(tempObj);
      }
@@ -250,7 +248,7 @@ void Config::GetLastWord(string firstWord)
        time = stoi(lastWord, NULL, 10);
      	 Object tempObj(time, firstWord);
      	 computerList.push_back(tempObj); 
-     	// cout <<"Object Data" << tempObj.cycleTime << " Name: " << tempObj.objectName << endl;
+     
      	
      }
      
