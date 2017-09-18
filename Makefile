@@ -1,2 +1,2 @@
 all: 
-	g++ Romania.cpp -o RomaniaSearch
+	g++ Eight.cpp -o EightPuzzle
