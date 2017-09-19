@@ -225,7 +225,7 @@ void MoveOptions(int x, int y)
 	if(x == 2) // No move down
 	{
 	 Moves[0] = Unavail; 
-         Moves[2] = Down;
+         Moves[2] = Up;
 	 NumMoves -1;
 	}
 	else
@@ -273,17 +273,31 @@ void FindZero()
    
 }
 
-int calcHeur(int currentLocx, int currentLocy, int value)
+int FindTile(int vlaue)
 {
- bool found = false
- int heuristic =0, index = 0;
+ bool found  = false; //int index = 0;
  while(!found)
+ {
+  if(BoardTiles[index].Value == value)
+  found = true;
+  else
+  index++;
+ }
+ return index;
+}
+
+int calcHeur(int currentLocx, int currentLocy, int index)
+{
+ //bool found = false
+ int heuristic =0;//, index = 0;
+ /*while(!found)
  {
   if (BoardTiles[index].Value == value)
   found = true;
   else
   index++; 
- }
+ }*/
+ //Find how many tiles the value is from its goal
  if(BoardTiles[index].goal.x > currentLocx )
 	heuristic = heuristic +(BoardTiles[index].goal.x - currentLocx);
  if(currentLocx > BoardTiles[index].goal.x )
@@ -292,6 +306,8 @@ int calcHeur(int currentLocx, int currentLocy, int value)
 	heuristic = heuristic + (currentLocy - BoardTiles[index].goal.y);
  if(BoardTiles[index].goal.y > currentLocy)
 	heuristic = heuristic + (BoardTiles[index].goal.y - currentLocy);
+
+return heuristic;
 }
 
 void UpdateTiles(int value, int moveIncrease)
@@ -300,13 +316,24 @@ void UpdateTiles(int value, int moveIncrease)
 	//bool found = false;  
 	//while(!found)
 	//{
+ 	int index = 0; 
+	bool found = false; 
+	while(!found)
+	 {
+       	 if (BoardTiles[index].Value == value)
+ 	 found = true;
+ 	 else
+ 	 index++; 
+ 	 }
+
+
  	 for(int row =0; row<3; row++)
 	 {
 	  for(int column =0; column<3; column++)
 	  {
 		if(board[row][column] = value)
                 {
-		  calcHeur(row, column,value);// found = true;
+		  int heur = calcHeur(row, column,index);// found = true;
 		  break;
 		}
 	  }
@@ -314,11 +341,67 @@ void UpdateTiles(int value, int moveIncrease)
 	  break;
 	 }
 	//}
+	//Updating the tiles a* search values
+	BoardTiles[index].Heuristic = heur;
+	BoardTiles[index].Moves += moveIncrease;
+	BoardTiles[index].Total = Heuristic + Moves;
  
 }
 
-void MoveDecision(int x, int y, Position Moves[])
+void MoveDecision(int x, int y, Position Moves[], int numMoves)
 {
+ 
+ int index = 0,availIndex =0, temp;
+ Position aValue; 
+ Position *availMoves = new Position [numMoves];
+ while(index < 4)
+{
+ if(Moves[index] >= 0)
+ {
+   temp = FindTile(Moves[index].x, Moves[index].y);
+   if (BoardTiles[temp].Heuristic > 0)
+   {
+    availMoves[availIndex] = Moves[index];
+    availIndex++;
+   } 
+ }
+ index++;
+}
+
+if(availIndex > 0)
+{
+ int swappIndex, first, second, tempOne = 0, tempTwo = 1;
+ if(availIndex == 1)
+ {
+  swapIndex = 0;// just swapp
+ }
+ else
+ {
+  while(tempOne < availIndex && tempSecond < availIndex)
+  {
+   first = FindTile(availMoves[tempOne].x, availMoves[tempOne].y);
+   second = FindTile(availMoves[tempTwo].x, availMoves[tempTwo].y);
+   if(BoardTile[first].Total<= BoardTile[second])
+    {
+     swapIndex = tempOne;
+     tempTwo += 2;
+    }
+   else
+    {
+      swapIndex = tempTwo;
+      tempOne += 2;
+    }
+  }
+ }
+  // Swap 0 with the swappIndex
+  int tempx, tempy, tempValue;
+  tempValue = BoardTile(FindTile(availMoves[swapIndex].x, availMoves[swapIndex].y)).value;
+  
+}
+else
+{ 
+  std::cout << "No other available moves" <<std::endl;
+}
  
 }
 
