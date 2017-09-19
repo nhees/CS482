@@ -25,13 +25,10 @@ Position goal;
 
 /*
 ReadBoardFile: Read board data in from a file to populate our board structure.
-
 Arguments:
 char* fname: The name of the file to read
-
 This just reads a simple file format of a b c each line. There should be three lines.
 Each of the 9 entries should go from 0-8 inclusive. If you spot a problem let us know.
-
 Returns bool: Returns true if the file was opened and read successfuly, and false if the file could not be read
 */
 bool ReadBoardFile(char* fname)
@@ -80,14 +77,11 @@ bool ReadBoardFile(char* fname)
 
 /*
 LogCell: Prints the current cell traveled to and its value and saves the output to a file
-
 Arguments:
 int x: The x of the cell you are visiting
 int y: The y of the cell you are visiting
-
 In order for us to grade you, you must print the cell you are travelling to in your algorithm.
 This function makes it easier for you to print the proper data. It also saves the data to a file.
-
 Returns void: No values returned
 */
 void LogCell(int x, int y)
@@ -98,12 +92,9 @@ void LogCell(int x, int y)
 
 /*
 SetartLogging: Opens the logging file for later writing
-
 Arguments:
 None
-
 Pretty much just a wrapper for fopen so that we make sure you are writing your logging data to the right file.
-
 Returns void: No values returned
 */
 void StartLogging()
@@ -113,12 +104,9 @@ void StartLogging()
 
 /*
 EndLogging: Closes the logging file properly
-
 Arguments:
 None
-
 Pretty much just a wrapper for fclose so that we make sure you close the right file.
-
 Returns void: No values returned
 */
 void EndLogging()
@@ -288,7 +276,7 @@ void FindZero()
 int calcHeur(int currentLocx, int currentLocy, int value)
 {
  bool found = false
- int index = 0;
+ int heuristic =0, index = 0;
  while(!found)
  {
   if (BoardTiles[index].Value == value)
@@ -296,29 +284,36 @@ int calcHeur(int currentLocx, int currentLocy, int value)
   else
   index++; 
  }
- 
- 
+ if(BoardTiles[index].goal.x > currentLocx )
+	heuristic = heuristic +(BoardTiles[index].goal.x - currentLocx);
+ if(currentLocx > BoardTiles[index].goal.x )
+ 	heuristic = heuristic + (currentLocx - BoardTiles[index].goal.x);
+ if(currentLocy > BoardTiles[index].goal.y)
+	heuristic = heuristic + (currentLocy - BoardTiles[index].goal.y);
+ if(BoardTiles[index].goal.y > currentLocy)
+	heuristic = heuristic + (BoardTiles[index].goal.y - currentLocy);
 }
+
 void UpdateTiles(int value, int moveIncrease)
 {
  //Update the Heuristic
-	bool found = false;  
-	while(!found)
-	{
+	//bool found = false;  
+	//while(!found)
+	//{
  	 for(int row =0; row<3; row++)
 	 {
 	  for(int column =0; column<3; column++)
 	  {
 		if(board[row][column] = value)
                 {
-		 found = true;
+		  calcHeur(row, column,value);// found = true;
 		  break;
 		}
 	  }
-	  if(found)
+	  //if(found)
 	  break;
 	 }
-	}
+	//}
  
 }
 
