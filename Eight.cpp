@@ -8,16 +8,18 @@ FILE* output;
 int** goal;
 
 
+
+struct Position{
+int x;
+int y;
+};
+
 struct Tile {
 int Heuristic;
 int Moves;
 int Total;
 int Value;
-};
-
-struct Position{
-int x;
-int y;
+Position goal;
 };
 
 
@@ -124,71 +126,205 @@ void EndLogging()
 	fclose(output);
 }
 
+/*Initializing the tile array*/
+void SetTiles()
+{
+ bool found = false;
+ int value = 1;
+ Tile * BoardTiles = new Tile[8];
+ for(int index = 0; index< 8; index++)
+ {
+	BoardTiles[index].Value = value;
+	value++;
+        BoardTiles[index].Moves = 0;
+ }
+
+//Storing the goal state for the different values
+ for(int row = 0; row<3; row++)
+{
+	//std::cout<<std::endl;
+	for(int column =0; column < 3; column++)
+	{
+          BoardTiles[goal[row][column]].goal.x = row;
+	  BoardTiles[goal[row][column]].goal.y = column;
+	  //std::cout<<goal[row][column];
+	}
+}
+
+}
+/*This function sets up a board that has the goal state that can be refered back to 
+throguhout the program*/
 void SetGoal()
 {
-	//std::cout<<"maybe I did"<<std::endl;
 	int tileValue= 0;
 	
 	goal = new int* [3];
 	for(int row=0; row < 3; row++)
 	{	
 		goal[row] = new int[3];
-		std::cout<<std::endl;
+		//std::cout<<std::endl;
 		for(int column=0; column < 3; column++)
 		{
 			goal[row][column] = tileValue;
-			std::cout << tileValue;
+			//std::cout << tileValue;
 			tileValue++;
 		}
 	}
+  SetTiles(); // Need to set the tiles as well
 	
 }
 
+//Sees is the board is at the goal state
+bool GoalState()
+{
+	bool equal = true;
+        int row, column;
+	while(equal && row < 2) // Will this stop the loop too soon? 
+         {
+	   for( row = 0; row< 3; row++)
+      	   {
+		for( column = 0; column < 3; column++)
+		{
+                  if(!(board[row][column] == goal[row][column]))
+		    {   
+    			equal = false;
+			break;
+		    }
+		}
+             if (!equal) // Need to break the second for loop to get to the while loop
+		break;
+	   }
+	 }
+        // end result of the function
+	if(equal)
+	return true;
+	else
+	return false;
+}
+
+void MoveOptions(int x, int y)
+{
+	std::cout<<"0 is at row:" << x << "and column: " << y<<std::endl;
+  if(!GoalState()) // Board is not at goal state
+  {	  
+   Position * Moves =  new Position [4];
+   Position Left, Right, Up, Down, Unavail;
+        //The left Position
+	Left.x = x-1;
+        Left.y = y;
+	//The right position
+    	Right.x = x+1;
+	Right.y = y;
+	// the Up position
+  	Up.x = x;
+	Up.y = y+1;
+	//The down position
+   	Down.x =x;
+	Down.y = y-1;
+	// The varaiable for when a positon is unavailable
+   	Unavail.x =-1;
+	Unavail.y = -1;
+	
+        int NumMoves = 4;
+	//The moves will be starting with down and then moving clockwise
+   
+	if(x == 0)// No up Move up
+        {
+	  Moves[0] = Down;
+	  Moves[2] = Unavail;
+	  NumMoves -1;
+	}// The blank space can't move up
+	if(x == 2) // No move down
+	{
+	 Moves[0] = Unavail; 
+         Moves[2] = Down;
+	 NumMoves -1;
+	}
+	else
+	{
+	Moves[0] = Down;
+	Moves[2] = Up;
+	}
+	if(y == 0)
+	{
+	  Moves[1] = Unavail;
+          Moves[3] = Right;
+	  NumMoves -1; 
+	}
+	if (y == 2)
+	{
+	  Moves[1] = Left;
+	  Moves[3] = Unavail;
+	  NumMoves-1;
+	}
+	else
+	{
+	  Moves[1] = Left;	
+	  Moves[3] = Right;	
+	}
+       }
+  else // The goal state test cam back true!!
+  { 
+   std::cout <<"Board is at Goal State!! " <<std::endl;
+  }
+}
 
 void FindZero()
 {
 	for(int row = 0; row< 3; row++)
 	{
-		for (int column = 0; coulmn<3; column++)
+		for (int column = 0; column<3; column++)
 		{
 			if(board[row][column] == 0)
-			break;
+                        {
+			 MoveOptions(row, column);
+			 break;
+			}
 		}
 	}
    
 }
 
-void MoveOptions(int x, int y)
+int calcHeur(int currentLocx, int currentLocy, int value)
 {
-   Position * Moves;
-   Position Left.x = x-1;
-   	    Left.y = y;
-   Position Right.x = x+1;
-	   Right.y = y;
-   Position Up.x = x;
-	    Up.y = y+1;
-   Position Down.x =x;
-	    AvailMove;
-   int NumMoves = 4;
-	if(x == 0)// No up Move up
-	{
-	 NumMoves - 1;
-	 if(y == 0) // No move left
-	  {
-	    NumMoves -1;
-	    Moves = new Position[2];
-	    //Move Down
-	    AvailMove.x = x;
-	    AvailMove.y = y+1; 
-	    Moves[0] = AvailMove
-	    // Move Right
+ bool found = false
+ int index = 0;
+ while(!found)
+ {
+  if (BoardTiles[index].Value == value)
+  found = true;
+  else
+  index++; 
+ }
  
+ 
+}
+void UpdateTiles(int value, int moveIncrease)
+{
+ //Update the Heuristic
+	bool found = false;  
+	while(!found)
+	{
+ 	 for(int row =0; row<3; row++)
+	 {
+	  for(int column =0; column<3; column++)
+	  {
+		if(board[row][column] = value)
+                {
+		 found = true;
+		  break;
+		}
 	  }
-	 
-
-	 
+	  if(found)
+	  break;
+	 }
 	}
-	
+ 
+}
+
+void MoveDecision(int x, int y, Position Moves[])
+{
+ 
 }
 
 int main(int argc, char** argv)
@@ -209,7 +345,7 @@ int main(int argc, char** argv)
 	//-------------------------------------
          
  	SetGoal();        
-
+        FindZero();
 	//Your code
 
 	//std::cout<<"Or didnt" <<std::endl;
