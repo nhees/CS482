@@ -22,6 +22,12 @@ int Value;
 Position goal;
 };
 
+Tile * BoardTiles;
+
+
+
+void MoveOptions(int x, int y);
+void UpdateTiles(int value, int moveIncrease);
 
 /*
 ReadBoardFile: Read board data in from a file to populate our board structure.
@@ -119,26 +125,30 @@ void SetTiles()
 {
  bool found = false;
  int value = 1;
- Tile * BoardTiles = new Tile[8];
+ BoardTiles = new Tile[8];
  for(int index = 0; index< 8; index++)
- {
+  {
 	BoardTiles[index].Value = value;
+       // std::cout<<"value:"<<value<< std:: endl;
+        
 	value++;
         BoardTiles[index].Moves = 0;
- }
+        
+  }
 
 //Storing the goal state for the different values
- for(int row = 0; row<3; row++)
-{
+ for(int column= 0; column<3; column++)
+ {
 	//std::cout<<std::endl;
-	for(int column =0; column < 3; column++)
+	for(int row =0; row < 3; row++)
 	{
-          BoardTiles[goal[row][column]].goal.x = row;
-	  BoardTiles[goal[row][column]].goal.y = column;
-	  //std::cout<<goal[row][column];
+          BoardTiles[(goal[column][row])].goal.x = row;
+	  BoardTiles[(goal[column][row])].goal.y = column;
+     
+	  
 	}
-}
-
+ }
+ 
 }
 /*This function sets up a board that has the goal state that can be refered back to 
 throguhout the program*/
@@ -147,19 +157,24 @@ void SetGoal()
 	int tileValue= 0;
 	
 	goal = new int* [3];
-	for(int row=0; row < 3; row++)
-	{	
-		goal[row] = new int[3];
-		//std::cout<<std::endl;
-		for(int column=0; column < 3; column++)
+	for(int column=0; column < 3; column++)
+	{	tileValue = column;
+		goal[column] = new int[3];
+		
+		for(int row=0; row < 3; row++)
 		{
-			goal[row][column] = tileValue;
-			//std::cout << tileValue;
-			tileValue++;
+			goal[column][row] = tileValue;
+			tileValue +=3;
 		}
 	}
+ 
   SetTiles(); // Need to set the tiles as well
-	
+ int value = 1;  
+for(int index = 0; index<8; index++)
+  {
+   UpdateTiles(value, 0);
+   value++;
+  }	
 }
 
 //Sees is the board is at the goal state
@@ -169,11 +184,11 @@ bool GoalState()
         int row, column;
 	while(equal && row < 2) // Will this stop the loop too soon? 
          {
-	   for( row = 0; row< 3; row++)
+	   for( column = 0; column< 3; column++)
       	   {
-		for( column = 0; column < 3; column++)
+		for( row = 0; row < 3; row++)
 		{
-                  if(!(board[row][column] == goal[row][column]))
+                  if(!(board[column][row] == goal[column][row]))
 		    {   
     			equal = false;
 			break;
@@ -183,12 +198,161 @@ bool GoalState()
 		break;
 	   }
 	 }
+ 
         // end result of the function
 	if(equal)
-	return true;
+	 return true;
 	else
-	return false;
+	 return false;
 }
+
+int FindTile(int value)
+{
+ bool found  = false; 
+ int index = 0;
+ while(!found)
+ {
+  if(BoardTiles[index].Value == value)
+  found = true;
+  else
+  index++;
+ }
+ return index;
+}
+
+int calcHeur(int currentLocx, int currentLocy, int index)
+{
+ //bool found = false
+ int heuristic =0;//, index = 0;
+ 
+ //Find how many tiles the value is from its goal
+ std::cout<<"goal row"<< BoardTiles[index].goal.x<< std::endl;
+std::cout<<"goal column" <<BoardTiles[index].goal.y <<std::endl;
+ //std::cout<<"current row" <<
+
+ if(BoardTiles[index].goal.x > currentLocx )
+	heuristic = heuristic +(BoardTiles[index].goal.x - currentLocx);
+ if(currentLocx > BoardTiles[index].goal.x )
+ 	heuristic = heuristic + (currentLocx - BoardTiles[index].goal.x);
+std::cout<<"heuristic" <<heuristic<<std::endl;
+ if(currentLocy > BoardTiles[index].goal.y)
+	heuristic = heuristic + (currentLocy - BoardTiles[index].goal.y);
+ if(BoardTiles[index].goal.y > currentLocy)
+	heuristic = heuristic + (BoardTiles[index].goal.y - currentLocy);
+std::cout<<"Value in Heur"<< BoardTiles[index].Value<<std::endl;
+std::cout<<"Heur in Heur" <<heuristic<<std::endl;
+return heuristic;
+}
+
+
+void UpdateTiles(int value, int moveIncrease)
+{
+ int heur;
+ 
+ 	int index = value -1;//0; 
+	//bool found = false; 
+        // use find tile function 
+	
+
+
+ 	 for(int column =0; column<3; column++)
+	 {
+	  for(int row =0; row<3; row++)
+	  {
+             // std::cout<<"Row"<<row<<"COlumn"<<column<<std::endl;
+              std::cout<<"Board"<< board[column][row]<<std::endl;
+              LogCell(column, row);
+              std::cout<<"value"<<value <<std::endl;
+		if(board[column][row] == value)
+                {
+                  std::cout<<"Row"<<row<<"COlumn"<<column<<std::endl;
+		  heur = calcHeur(row, column,index);// found = true;
+                  
+		  break;
+		}
+	  }
+	  //if(found)
+	  break;
+	 }
+	//}
+	//Updating the tiles a* search values
+	BoardTiles[index].Heuristic = heur;
+	BoardTiles[index].Moves += moveIncrease;
+	BoardTiles[index].Total = BoardTiles[index].Heuristic + BoardTiles[index].Moves;
+ 
+}
+
+void MoveDecision(int x, int y, Position Moves[], int numMoves)
+{
+ 
+ int index = 0,availIndex =0, temp;
+ Position aValue; 
+ Position *availMoves = new Position [numMoves];
+ while(index < 4)
+ { // do the move options have a heuristic above 0??
+  if(Moves[index].x == 0 || Moves[index].x > 0 )
+  {
+    std::cout<<"found a move" <<std::endl;
+   temp = FindTile(board[Moves[index].x] [Moves[index].y]);
+   std::cout<<"Value"<< BoardTiles[temp].Value <<std::endl;
+   std::cout<<"Heuristic"<<BoardTiles[temp].Heuristic <<std::endl;
+   if (BoardTiles[temp].Heuristic > 0)
+   {
+    std:: cout <<"found a valid move" <<std::endl;
+    LogCell(Moves[index].x, Moves[index].y);
+    availMoves[availIndex] = Moves[index];
+    availIndex++;
+   } 
+  }
+  index++;
+ }
+// There are available move options
+if(availIndex > 0)
+{
+ int swapIndex, first, second, tempOne = 0, tempTwo = 1;
+ // only one available move
+ if(availIndex == 1)
+ {
+  swapIndex = 0;
+ }
+ else
+ {
+  // Find which option is the a* search option
+  while(tempOne < availIndex && tempTwo < availIndex)
+  {
+   first = FindTile(board[availMoves[tempOne].x][availMoves[tempOne].y]);
+   second = FindTile(board[availMoves[tempTwo].x][availMoves[tempTwo].y]);
+   if(BoardTiles[first].Total < BoardTiles[second].Total || BoardTiles[first].Total == BoardTiles[second].Total)
+    {
+     swapIndex = tempOne;
+     tempTwo += 2;
+    }
+   else
+    {
+      swapIndex = tempTwo;
+      tempOne += 2;
+    }
+  }
+ }
+  // Swap 0 with the swapIndex
+  int tempx, tempy, tempValue;
+  tempValue = BoardTiles[FindTile(board[availMoves[swapIndex].x][availMoves[swapIndex].y])].Value;
+  board[availMoves[swapIndex].x][availMoves[swapIndex].y] =0;
+  LogCell(availMoves[swapIndex].x, availMoves[swapIndex].y);
+  board[x][y]= tempValue;
+  //Update the move tile's heuristic 
+  UpdateTiles(tempValue, 1);
+  //Find the next move
+  MoveOptions(availMoves[swapIndex].x, availMoves[swapIndex].y);
+  
+}
+else
+{ 
+  std::cout << "No other available moves" <<std::endl;
+}
+ 
+}
+
 
 void MoveOptions(int x, int y)
 {
@@ -250,6 +414,8 @@ void MoveOptions(int x, int y)
 	  Moves[1] = Left;	
 	  Moves[3] = Right;	
 	}
+       std::cout<<"Number of Moves: " <<NumMoves<<std::endl;
+       MoveDecision(x,y,Moves, NumMoves);
        }
   else // The goal state test cam back true!!
   { 
@@ -273,137 +439,7 @@ void FindZero()
    
 }
 
-int FindTile(int vlaue)
-{
- bool found  = false; //int index = 0;
- while(!found)
- {
-  if(BoardTiles[index].Value == value)
-  found = true;
-  else
-  index++;
- }
- return index;
-}
 
-int calcHeur(int currentLocx, int currentLocy, int index)
-{
- //bool found = false
- int heuristic =0;//, index = 0;
- /*while(!found)
- {
-  if (BoardTiles[index].Value == value)
-  found = true;
-  else
-  index++; 
- }*/
- //Find how many tiles the value is from its goal
- if(BoardTiles[index].goal.x > currentLocx )
-	heuristic = heuristic +(BoardTiles[index].goal.x - currentLocx);
- if(currentLocx > BoardTiles[index].goal.x )
- 	heuristic = heuristic + (currentLocx - BoardTiles[index].goal.x);
- if(currentLocy > BoardTiles[index].goal.y)
-	heuristic = heuristic + (currentLocy - BoardTiles[index].goal.y);
- if(BoardTiles[index].goal.y > currentLocy)
-	heuristic = heuristic + (BoardTiles[index].goal.y - currentLocy);
-
-return heuristic;
-}
-
-void UpdateTiles(int value, int moveIncrease)
-{
- //Update the Heuristic
-	//bool found = false;  
-	//while(!found)
-	//{
- 	int index = 0; 
-	bool found = false; 
-	while(!found)
-	 {
-       	 if (BoardTiles[index].Value == value)
- 	 found = true;
- 	 else
- 	 index++; 
- 	 }
-
-
- 	 for(int row =0; row<3; row++)
-	 {
-	  for(int column =0; column<3; column++)
-	  {
-		if(board[row][column] = value)
-                {
-		  int heur = calcHeur(row, column,index);// found = true;
-		  break;
-		}
-	  }
-	  //if(found)
-	  break;
-	 }
-	//}
-	//Updating the tiles a* search values
-	BoardTiles[index].Heuristic = heur;
-	BoardTiles[index].Moves += moveIncrease;
-	BoardTiles[index].Total = Heuristic + Moves;
- 
-}
-
-void MoveDecision(int x, int y, Position Moves[], int numMoves)
-{
- 
- int index = 0,availIndex =0, temp;
- Position aValue; 
- Position *availMoves = new Position [numMoves];
- while(index < 4)
-{
- if(Moves[index] >= 0)
- {
-   temp = FindTile(Moves[index].x, Moves[index].y);
-   if (BoardTiles[temp].Heuristic > 0)
-   {
-    availMoves[availIndex] = Moves[index];
-    availIndex++;
-   } 
- }
- index++;
-}
-
-if(availIndex > 0)
-{
- int swappIndex, first, second, tempOne = 0, tempTwo = 1;
- if(availIndex == 1)
- {
-  swapIndex = 0;// just swapp
- }
- else
- {
-  while(tempOne < availIndex && tempSecond < availIndex)
-  {
-   first = FindTile(availMoves[tempOne].x, availMoves[tempOne].y);
-   second = FindTile(availMoves[tempTwo].x, availMoves[tempTwo].y);
-   if(BoardTile[first].Total<= BoardTile[second])
-    {
-     swapIndex = tempOne;
-     tempTwo += 2;
-    }
-   else
-    {
-      swapIndex = tempTwo;
-      tempOne += 2;
-    }
-  }
- }
-  // Swap 0 with the swappIndex
-  int tempx, tempy, tempValue;
-  tempValue = BoardTile(FindTile(availMoves[swapIndex].x, availMoves[swapIndex].y)).value;
-  
-}
-else
-{ 
-  std::cout << "No other available moves" <<std::endl;
-}
- 
-}
 
 int main(int argc, char** argv)
 {
